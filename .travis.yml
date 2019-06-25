@@ -1,0 +1,37 @@
+language: php
+sudo: false
+
+cache:
+  yarn: true
+  directories:
+    - $HOME/.composer/cache/files
+    - ./bin/.phpunit
+services:
+  - postgresql
+env:
+  global:
+    - SYMFONY_PHPUNIT_DIR=./bin/.phpunit
+    - SYMFONY_DEPRECATIONS_HELPER=weak
+    - DATABASE_URL=postgres://creds:creds@127.0.0.1:5432/creds
+
+matrix:
+  fast_finish: true
+  include:
+    - php: 7.3
+    # 'php: nightly' is PHP 8.0
+
+before_install:
+  - psql -c 'create database creds;' -U postgres
+  - psql -c "CREATE USER creds WITH PASSWORD 'creds';" -U postgres
+  - psql -d creds -U postgres -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO creds;"
+  - psql -d creds -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE creds TO creds;"
+  - '[[ "$TRAVIS_PHP_VERSION" == "7.4snapshot" ]] || phpenv config-rm xdebug.ini'
+  - composer self-update
+
+install:
+  - composer install -n
+  - ./bin/phpunit install
+
+script:
+  - php bin/console doc:mig:mig -n
+  - ./bin/phpunit
