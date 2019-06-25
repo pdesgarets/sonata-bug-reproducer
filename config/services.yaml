@@ -25,3 +25,14 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    admin.student:
+        class: App\Admin\StudentAdmin
+        arguments: [~, App\Entity\Student, App\Controller\StudentAdminController]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: admin, label: Student }
+        public: true
+
+    App\EventListener\StudentListener:
+        tags:
+            - { name: doctrine.event_subscriber }
